@@ -7,4 +7,4 @@ The project architecture includes the following components:
 - **Lambda Function**: Processes and transforms the retrieved objects.
 - **S3 Object Lambda Access Point**: Intercepts GET requests and routes the flow through the Lambda function.
 
-![architecture](architecture.png)
+![Architecture](images/architecture.png)
