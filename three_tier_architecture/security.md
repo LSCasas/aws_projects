@@ -12,7 +12,31 @@
 
 ## IAM
 
-- Specific roles and policies for:
-  - EC2 (access to metrics, logs, monitoring)
-  - Auto Scaling (instance creation and termination)
-  - CloudWatch (metric reading)
+### 🔧 Role for EC2 (`EC2MonitoringRole`)
+
+**Attached Policy: `EC2MonitoringPolicy`**
+
+Permissions:
+
+- `logs:CreateLogStream`
+- `logs:PutLogEvents`
+- `logs:DescribeLogStreams`
+- `cloudwatch:PutMetricData`
+- `cloudwatch:GetMetricData`
+- `cloudwatch:ListMetrics`
+
+---
+
+### 📈 Role for Auto Scaling (`AutoScalingExecutionRole`)
+
+**Attached Policy: `AutoScalingPolicy`**
+
+Permissions:
+
+- `ec2:DescribeInstances`
+- `ec2:TerminateInstances`
+- `ec2:RunInstances`
+- `autoscaling:UpdateAutoScalingGroup`
+- `autoscaling:SetDesiredCapacity`
+- `autoscaling:CreateAutoScalingGroup`
+- `iam:PassRole`
