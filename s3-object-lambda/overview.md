@@ -6,9 +6,9 @@ This project demonstrates how to use Amazon S3 Object Lambda to dynamically modi
 
 In this example, the Lambda function transforms the content of the objects by converting all text to uppercase, illustrating a simple yet effective transformation that can be applied without modifying the original data in S3.
 
-## Purpose
+## Objetive
 
-The purpose of this project is to show how the read behavior of S3 objects can be customized using Amazon S3 Object Lambda. By implementing a Lambda function, you can modify the way data is presented to consumers without duplicating or altering the data stored in S3.
+The objetive of this project is to show how the read behavior of S3 objects can be customized using Amazon S3 Object Lambda. By implementing a Lambda function, you can modify the way data is presented to consumers without duplicating or altering the data stored in S3.
 
 This pattern is useful in scenarios where:
 
