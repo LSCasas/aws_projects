@@ -36,13 +36,18 @@ Dynamic scaling was implemented to automatically adjust the number of instances 
 5. **Access via Load Balancer:**
    - As with previous deployments, traffic can only access the instances through the Load Balancer's DNS, with direct IP access blocked.
 
+Load Balancer
+![Load Balancer](../images/load_balancer.jpg)
+
 Original
 ![Instance 1](../images/instance_1.jpg)
 
 Replica 2
+![Instance replica 2](../images/instance_replica_2.jpg)
 ![Instance 2](../images/instance_2.jpg)
 
 Replica 3
+![Instance replica 3](../images/instance_replica_3.jpg)
 ![Instance 3](../images/instance_3.jpg)
 
 Just using the navigator.

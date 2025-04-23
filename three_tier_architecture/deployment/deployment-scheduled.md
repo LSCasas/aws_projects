@@ -32,16 +32,22 @@ Scheduled scaling was implemented to automatically adjust the number of instance
 5. **Access via Load Balancer:**
    - A Load Balancer was configured to handle incoming traffic, ensuring access is only made through its DNS, and direct IP access was blocked.
 
+Load Balancer
+![Load Balancer](../images/load_balancer.jpg)
+
 Original
 ![Instance 1](../images/instance_1.jpg)
 
 Replica 2
+![Instance replica 2](../images/instance_replica_2.jpg)
 ![Instance 2](../images/instance_2.jpg)
 
 Replica 3
+![Instance replica 3](../images/instance_replica_3.jpg)
 ![Instance 3](../images/instance_3.jpg)
 
 Replica 4
+![Instance replica 4](../images/instance_replica_4.jpg)
 ![Instance 4](../images/instance_4.jpg)
 
 Just using the navigator.

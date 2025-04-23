@@ -1,6 +1,6 @@
 # Architecture
 
-The architecture follows the principles of **high availability** and **scalability** within AWS.
+The architecture follows the principles of **three-tier** and **scalability** within AWS.
 
 ## Components
 
