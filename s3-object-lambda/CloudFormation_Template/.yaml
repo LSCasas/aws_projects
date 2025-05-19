@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Deploy S3 Bucket, Access Point, Lambda function, IAM Role, and S3 Object Lambda Access Point
+  for dynamic object transformation (e.g., uppercase text).
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Unique name for the S3 bucket (must be globally unique)
+
+  LambdaFunctionName:
+    Type: String
+    Default: S3ObjectLambdaTransformer
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+  S3BucketAccessPoint:
+    Type: AWS::S3::AccessPoint
+    Properties:
+      Bucket: !Ref S3Bucket
+      Name: !Sub "${BucketName}-accesspoint"
+      VpcConfiguration:
+        # Optional: remove if public access needed, else set your VPC here
+        # VpcId: vpc-xxxxxx
+        # For demo, leave empty for public access
+        # CloudFormation requires at least one config property, so omit for public
+        # (Commented out for simplicity)
+        #
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${LambdaFunctionName}-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaS3ObjectLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3-object-lambda:GetObject
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${BucketName}/*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 10
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import base64
+          import io
+
+          def lambda_handler(event, context):
+              # Get the S3 object URL from the event
+              s3_url = event['getObjectContext']['inputS3Url']
+
+              s3 = boto3.client('s3')
+
+              # Download the object
+              response = s3.get_object(
+                  Bucket=event['getObjectContext']['bucketArn'].split(':')[-1],
+                  Key=event['getObjectContext']['key']
+              )
+
+              # Read object content
+              body = response['Body'].read()
+              # Convert to uppercase (assuming text data)
+              transformed = body.decode('utf-8').upper().encode('utf-8')
+
+              # Return transformed content as streaming response
+              return {
+                  'statusCode': 200,
+                  'headers': {'Content-Type': 'text/plain'},
+                  'body': base64.b64encode(transformed).decode('utf-8'),
+                  'isBase64Encoded': True
+              }
+
+  S3ObjectLambdaAccessPoint:
+    Type: AWS::S3ObjectLambda::AccessPoint
+    Properties:
+      Name: !Sub "${BucketName}-object-lambda"
+      ObjectLambdaConfiguration:
+        SupportingAccessPoint: !Ref S3BucketAccessPoint
+        TransformationConfigurations:
+          - Actions:
+              - GetObject
+            ContentTransformation:
+              AwsLambda:
+                FunctionArn: !GetAtt LambdaFunction.Arn
+
+Outputs:
+  BucketName:
+    Description: S3 Bucket name
+    Value: !Ref S3Bucket
+
+  AccessPointName:
+    Description: S3 Access Point name
+    Value: !Ref S3BucketAccessPoint
+
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+
+  S3ObjectLambdaAccessPointName:
+    Description: S3 Object Lambda Access Point name
+    Value: !Ref S3ObjectLambdaAccessPoint
