@@ -106,7 +106,7 @@ Dynamic scaling was implemented to automatically adjust the number of instances 
 
    - The Launch Template includes the base configuration for the instances.
 
-![EFS Configuration](../images/EFS.jpg)
+![EFS Configuration](./images/EFS.jpg)
 
 2. **Installing `stress`:**
 
@@ -115,7 +115,7 @@ Dynamic scaling was implemented to automatically adjust the number of instances 
      sudo apt install -y stress
      ```
 
-![Stress Instane](../images/stress_instance.jpg)
+![Stress Instane](./images/stress_instance.jpg)
 
 3. **Auto Scaling Group (ASG) Configuration:**
 
@@ -124,8 +124,8 @@ Dynamic scaling was implemented to automatically adjust the number of instances 
      - **Scale up:** If CPU > 70% for 2 minutes, add one instance.
      - **Scale down:** If CPU < 30% for 5 minutes, remove one instance.
 
-![Target group Dynamic](../images/target_group_dynamic.jpg)
-![Dynamic scaling policies ](../images/dynamic_scaling.jpg)
+![Target group Dynamic](./images/target_group_dynamic.jpg)
+![Dynamic scaling policies ](./images/dynamic_scaling.jpg)
 
 4. **Load Generation with `stress`:**
 
@@ -135,24 +135,24 @@ Dynamic scaling was implemented to automatically adjust the number of instances 
    - As with previous deployments, traffic can only access the instances through the Load Balancer's DNS, with direct IP access blocked.
 
 Load Balancer
-![Load Balancer](../images/load_balancer.jpg)
+![Load Balancer](./images/load_balancer.jpg)
 
 Original
-![Instance 1](../images/instance_1.jpg)
+![Instance 1](./images/instance_1.jpg)
 
 Replica 2
-![Instance replica 2](../images/instance_replica_2.jpg)
-![Instance 2](../images/instance_2.jpg)
+![Instance replica 2](./images/instance_replica_2.jpg)
+![Instance 2](./images/instance_2.jpg)
 
 Replica 3
-![Instance replica 3](../images/instance_replica_3.jpg)
-![Instance 3](../images/instance_3.jpg)
+![Instance replica 3](./images/instance_replica_3.jpg)
+![Instance 3](./images/instance_3.jpg)
 
 Just using the navigator.
-![Via Navigator](../images/navegator.jpg)
+![Via Navigator](./images/navegator.jpg)
 
 History
-![History](../images/historial_dymc.jpg)
+![History](./images/historial_dymc.jpg)
 
 ### Validation
 
@@ -180,14 +180,14 @@ Manual deployment was implemented to have full control over the number of runnin
      ```
      This ensures that all instances, whether new or existing, have access to the same content.
 
-![EFS Configuration](../images/EFS.jpg)
+![EFS Configuration](./images/EFS.jpg)
 
 3. **Auto Scaling Group (ASG):**
 
    - Although the ASG is configured, scaling is done manually. Added 1 instance. Instances are adjusted from the AWS console.
 
-![Auto Scaling Group](../images/auto_scaling_group.jpg)
-![Auto Scaling](../images/auto_scaling.jpg)
+![Auto Scaling Group](./images/auto_scaling_group.jpg)
+![Auto Scaling](./images/auto_scaling.jpg)
 
 4. **Installing `stress`:**
 
@@ -196,23 +196,23 @@ Manual deployment was implemented to have full control over the number of runnin
   sudo apt install -y stress
   ```
 
-![Stress Instane](../images/stress_instance.jpg)
+![Stress Instane](./images/stress_instance.jpg)
 
 5. **Access via Load Balancer:**
    - A Load Balancer (ELB) was configured to handle incoming traffic and redirect it to the EC2 instances. Direct IP access is blocked, ensuring all traffic flows through the ELB DNS.
 
 Load Balancer
-![Load Balancer](../images/load_balancer.jpg)
+![Load Balancer](./images/load_balancer.jpg)
 
 Original
-![Instance](../images/instance_1.jpg)
+![Instance](./images/instance_1.jpg)
 
 Replica
-![Instance replica 2](../images/instance_replica_2.jpg)
-![Instance 2](../images/instance_2.jpg)
+![Instance replica 2](./images/instance_replica_2.jpg)
+![Instance 2](./images/instance_2.jpg)
 
 Just using the navigator.
-![Via Navigator](../images/navegator.jpg)
+![Via Navigator](./images/navegator.jpg)
 
 ### Validation
 
@@ -232,7 +232,7 @@ Scheduled scaling was implemented to automatically adjust the number of instance
 
    - A Launch Template similar to the manual deployment was used, but with the difference that scaling is triggered automatically based on specifications.
 
-![EFS Configuration](../images/EFS.jpg)
+![EFS Configuration](./images/EFS.jpg)
 
 2. **Installing `stress`:**
 
@@ -241,13 +241,13 @@ Scheduled scaling was implemented to automatically adjust the number of instance
      sudo apt install -y stress
      ```
 
-![Stress Instane](../images/stress_instance.jpg)
+![Stress Instane](./images/stress_instance.jpg)
 
 3. **Configuring the Auto Scaling Group (ASG):**
 
    - Scheduled scaling policies were configured using the AWS console
 
-![Target group Programming](../images/target_group_programming.jpg)
+![Target group Programming](./images/target_group_programming.jpg)
 
 4. **Testing with `stress`:**
 
@@ -257,31 +257,31 @@ Scheduled scaling was implemented to automatically adjust the number of instance
    - A Load Balancer was configured to handle incoming traffic, ensuring access is only made through its DNS, and direct IP access was blocked.
 
 Load Balancer
-![Load Balancer](../images/load_balancer.jpg)
+![Load Balancer](./images/load_balancer.jpg)
 
 Original
-![Instance 1](../images/instance_1.jpg)
+![Instance 1](./images/instance_1.jpg)
 
 Replica 2
-![Instance replica 2](../images/instance_replica_2.jpg)
-![Instance 2](../images/instance_2.jpg)
+![Instance replica 2](./images/instance_replica_2.jpg)
+![Instance 2](./images/instance_2.jpg)
 
 Replica 3
-![Instance replica 3](../images/instance_replica_3.jpg)
-![Instance 3](../images/instance_3.jpg)
+![Instance replica 3](./images/instance_replica_3.jpg)
+![Instance 3](./images/instance_3.jpg)
 
 Replica 4
-![Instance replica 4](../images/instance_replica_4.jpg)
-![Instance 4](../images/instance_4.jpg)
+![Instance replica 4](./images/instance_replica_4.jpg)
+![Instance 4](./images/instance_4.jpg)
 
 Just using the navigator.
-![Via Navigator](../images/navegator.jpg)
+![Via Navigator](./images/navegator.jpg)
 
 Register
-![Registered targets](../images/registered_targets.jpg)
+![Registered targets](./images/registered_targets.jpg)
 
 History
-![Historial](../images/historial_prgm.jpg)
+![Historial](./images/historial_prgm.jpg)
 
 ### Validation
 
