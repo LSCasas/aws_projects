@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create a PostgreSQL database instance in Amazon RDS (Free Tier eligible)
+
+Parameters:
+  DBInstanceIdentifier:
+    Type: String
+    Default: mbep
+    Description: Unique name for the DB instance
+  DBName:
+    Type: String
+    Default: exampledb
+    Description: Initial database name
+  DBUsername:
+    Type: String
+    Default: admin
+    Description: Master username
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Master password (min 8 chars)
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the DB will be deployed
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - subnet-xxxxxxxx # <-- Replace with your subnet ID
+        - subnet-yyyyyyyy
+      Tags:
+        - Key: Name
+          Value: rds-subnet-group
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow PostgreSQL traffic
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: rds-security-group
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: "15.3" # Optional: specify exact version
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBName: !Ref DBName
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      StorageType: gp2
+      MultiAZ: false
+      Tags:
+        - Key: Name
+          Value: rds-postgresql-instance
+
+Outputs:
+  RDSInstanceEndpoint:
+    Description: Endpoint of the RDS instance
+    Value: !GetAtt RDSInstance.Endpoint.Address
