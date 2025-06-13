@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CI/CD Deployment for Node.js Application using Elastic Beanstalk and CodePipeline
+
+Parameters:
+  ApplicationName:
+    Type: String
+    Default: MyNodeApp
+  EnvironmentName:
+    Type: String
+    Default: MyNodeApp-env
+  S3BucketName:
+    Type: String
+    Default: my-nodeapp-artifacts
+
+Resources:
+  # S3 Bucket for application artifacts
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # Elastic Beanstalk Application
+  BeanstalkApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Ref ApplicationName
+      Description: Node.js Application deployed via Elastic Beanstalk
+
+  # Elastic Beanstalk Environment
+  BeanstalkEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      EnvironmentName: !Ref EnvironmentName
+      ApplicationName: !Ref BeanstalkApplication
+      SolutionStackName: "64bit Amazon Linux 2023 v4.0.3 running Node.js 18"
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: t2.micro
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: NODE_ENV
+          Value: production
+
+  # IAM Role for CodePipeline
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineServiceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodePipelinePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - elasticbeanstalk:*
+                  - iam:PassRole
+                Resource: "*"
+
+  # CodePipeline
+  MyPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                S3Bucket: !Ref ArtifactBucket
+                S3ObjectKey: application.zip
+        - Name: Deploy
+          Actions:
+            - Name: DeployAction
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: ElasticBeanstalk
+                Version: 1
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ApplicationName: !Ref BeanstalkApplication
+                EnvironmentName: !Ref BeanstalkEnvironment
+
+Outputs:
+  BucketName:
+    Description: S3 Bucket for artifacts
+    Value: !Ref ArtifactBucket
+  ElasticBeanstalkURL:
+    Description: URL of the Elastic Beanstalk environment
+    Value: !GetAtt BeanstalkEnvironment.EndpointURL
