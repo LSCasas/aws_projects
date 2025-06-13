@@ -80,10 +80,15 @@ The architecture consists of the following components:
 
 - Open a browser and paste the copied **CNAME URL**.
 - Confirm that the deployed application loads and works correctly.
-- Was added a new movie.
+- You can see the before-and-after.
 
-> ![Step 6 - Navigator](images/navigator.jpeg)  
-> ![Step 6 - Add Movie](images/movie.jpeg)
+Before
+
+> ![Step 6 - Navigator](images/then.jpeg)
+
+After
+
+> ![Step 6 - Add Movie](images/before.jpeg)
 
 ### 7. Review or Create the S3 Bucket for Artifacts
 
