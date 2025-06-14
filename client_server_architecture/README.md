@@ -1,4 +1,4 @@
-# Secure Deployment of a Web Application with Amazon EC2 and SSL
+# Secure Deployment of a Web Application with Amazon EC2 and SSL (Client Server Architecture)
 
 This project demonstrates how to deploy a Django-based web application using an Amazon EC2 instance and secure it using HTTPS with a Let's Encrypt SSL certificate. The process includes setting up the EC2 instance, configuring DNS, deploying the app, and implementing SSL encryption.
 
@@ -28,7 +28,7 @@ The architecture of this project includes the following components:
 - **Domain Configuration**: DNS records set up to point to EC2 public DNS.
 - **Let’s Encrypt SSL**: Provides HTTPS encryption for secure access.
 
-![Architecture](images/architecture.jpg)
+![Architecture](images/architecture.png)
 
 ---
 
