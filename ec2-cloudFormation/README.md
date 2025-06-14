@@ -27,7 +27,6 @@ This practice includes:
 
 - **EC2 Instance** with Amazon Linux 2
 - **Security Group** to allow HTTP traffic (port 80)
-- **User data script** to install Apache and serve a basic web page
 - All resources created via **CloudFormation** using **Infrastructure Composer**
 
 ![Architecture](images/architecture.png)
