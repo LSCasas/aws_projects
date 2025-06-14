@@ -62,19 +62,19 @@ The deployment of this project consists of the following steps:
 1. **Upload CSV Files to S3**
    First, an S3 bucket named laboratorio-athena-lscg-202502 was created. During the creation process, the following settings were configured:
 
-Bucket Name: laboratorio-athena-lscg-202502
+   Bucket Name: laboratorio-athena-lscg-202502
 
-Region: (selected based on geographic preference)
+   Region: (selected based on geographic preference)
 
-Access Configuration: Block all public access (for security purposes)
+   Access Configuration: Block all public access (for security purposes)
 
-After creating the bucket, two prefixes (folders) were created:
+   After creating the bucket, two prefixes (folders) were created:
 
-result/ → used to store the results of Athena queries.
+   result/ → used to store the results of Athena queries.
 
-airline_delay/ → used to store the CSV datasets related to flight delays.
+   airline_delay/ → used to store the CSV datasets related to flight delays.
 
-The flight delay datasets (CSV files) were then uploaded into the airline_delay/ prefix.
+   The flight delay datasets (CSV files) were then uploaded into the airline_delay/ prefix.
 
 ![S3 Buckets](images/bucket.jpg)
 ![Prefix](images/prefix.jpg)
@@ -93,7 +93,7 @@ The flight delay datasets (CSV files) were then uploaded into the airline_delay/
    Athena was then used to run SQL queries directly over the CSV file, without the need to create a table.
 
    ```sql
-   SELECT * FROM flight_delay_csv;
+   SELECT carrier_name FROM flight_delay_csv;
    ```
 
    ![Query 1](images/query_1.jpg)
@@ -102,9 +102,14 @@ The flight delay datasets (CSV files) were then uploaded into the airline_delay/
    A table schema was defined and mapped to the file stored in S3.
 
    ```sql
-   CREATE EXTERNAL TABLE flight_data (...)
-   ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
-   LOCATION 's3://bucket/path/';
+   CREATE TABLE new_table
+   WITH
+   {
+    format - 'Parquet',
+    write_compression - 'SNAPPY',
+    external_location = 's3://laboratorio-athena-lscg-202503/Airline_Delay/output/'
+   }
+   AS SELECT * FROM flight_delays_csv
    ```
 
    ![Create Table](images/create_table.jpg)
@@ -122,7 +127,7 @@ The flight delay datasets (CSV files) were then uploaded into the airline_delay/
    A query was performed on a view created from one or more tables.
 
    ```sql
-   SELECT * FROM view_table;
+   SELECT carrier_name FROM view_table;
    ```
 
    ![Query View](images/query_view.jpg)
@@ -131,7 +136,41 @@ The flight delay datasets (CSV files) were then uploaded into the airline_delay/
    Complex queries were executed by joining multiple sports-related tables.
 
    ```sql
-   SELECT name, location, datetime FROM sporting_event_info ...;
+    SELECT
+    e.id AS event_id,
+    e.sport_type_name AS sport,
+    e.start_date_time AS event_date_time,
+    h.name AS home_team,
+    a.name AS away_team,
+    l.name AS location,
+    l.city
+    FROM parquet_sport_event e,
+    parquet_sport_team h,
+    parquet_sport_team a,
+    parquet_sport_location l
+    WHERE e.home_team_id = h.id
+    AND e.away_team_id = a.id
+    AND e.location_id = l.id;
+   ```
+
+   ```sql
+    SELECT t.id AS ticket_id,
+    e.event_id,
+    e.sport,
+    e.event_date_time,
+    e.home_team,
+    e.away_team,
+    e.location,
+    e.city,
+    t.seat_level,
+    t.seat_section,
+    t.seat_row,
+    t.seat,
+    t.ticket_price,
+    p.full_name AS ticketholder
+    FROM sporting_event_info e,
+    parquet_sporting_event_ticket t,
+    parquet_person p;
    ```
 
    ![Sports Query](images/soports_query.jpg)
