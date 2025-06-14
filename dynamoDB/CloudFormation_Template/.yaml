@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "DynamoDB Stream to Lambda Integration with CloudWatch Logs"
+
+Resources:
+  ## DynamoDB Table
+  MusicTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Music
+      BillingMode: PAYPERREQUEST
+      AttributeDefinitions:
+        - AttributeName: Artist
+          AttributeType: S
+        - AttributeName: SongTitle
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Artist
+          KeyType: HASH
+        - AttributeName: SongTitle
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: Expiration
+        Enabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ## IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaDynamoDBStreamExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaDynamoDBAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  ## Lambda Function
+  StreamProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LaboratorioDBStreamFunction
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import json
+
+          def lambda_handler(event, context):
+              for record in event['Records']:
+                  print("DynamoDB Record: ", json.dumps(record, indent=2))
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Processed event successfully.')
+              }
+      Events:
+        DynamoDBStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt MusicTable.StreamArn
+            StartingPosition: LATEST
