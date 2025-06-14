@@ -1,4 +1,4 @@
-# AWS VPC with Public/Private Subnets, EC2 and NAT Gateway
+# Jump Architecture
 
 This project documents the manual setup of a Virtual Private Cloud (VPC) on AWS. The objective was to create a VPC with both public and private subnets, configure route tables, deploy EC2 instances, and test connectivity through a NAT Gateway. The process was executed manually via the AWS Console as part of a hands-on lab.
 
