@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Secure Deployment of a Django Web Application with EC2 and Let's Encrypt SSL
+
+Parameters:
+  KeyName:
+    Description: EC2 KeyPair for SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+
+  SSHLocation:
+    Description: IP range to SSH (e.g., 0.0.0.0/0 for public or your IP)
+    Type: String
+    Default: 0.0.0.0/0
+
+Resources:
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH, HTTP, HTTPS access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: ami-0c02fb55956c7d316 # Ubuntu 20.04 LTS
+      SecurityGroups:
+        - !Ref WebAppSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install -y python3-pip python3-venv nginx git ufw
+          ufw allow 'Nginx Full'
+          ufw allow OpenSSH
+          ufw --force enable
+          cd /home/ubuntu
+          python3 -m venv env
+          source env/bin/activate
+          pip install django gunicorn certbot python3-certbot-nginx
+          # Replace below with git clone of your project or wget/curl setup
+          django-admin startproject mysite
+          cd mysite
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          gunicorn --bind 0.0.0.0:8000 mysite.wsgi &
+          # Basic Nginx config (adjust as needed)
+          echo '
+          server {
+              listen 80;
+              server_name YOUR_DOMAIN;
+
+              location / {
+                  proxy_pass http://127.0.0.1:8000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+          }' > /etc/nginx/sites-available/default
+          systemctl restart nginx
+          # SSL with Let's Encrypt
+          certbot --nginx -n --agree-tos --redirect --email you@example.com -d YOUR_DOMAIN
+
+Outputs:
+  InstancePublicIP:
+    Description: Public IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  InstancePublicDNS:
+    Description: Public DNS name of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
