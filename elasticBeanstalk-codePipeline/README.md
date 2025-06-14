@@ -88,7 +88,7 @@ Before
 
 After
 
-> ![Step 6 - Add Movie](images/before.jpeg)
+> ![Step 6 - Add Movie](images/after.jpeg)
 
 ### 7. Review or Create the S3 Bucket for Artifacts
 
