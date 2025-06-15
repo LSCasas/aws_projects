@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Step Functions with S3, Lambda, and SNS Integration
+
+Parameters:
+  EmailSubscription:
+    Type: String
+    Description: Email to subscribe to SNS notifications
+
+Resources:
+  # SNS Topic and Subscription
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: StepFunctionResultTopic
+
+  SNSTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref EmailSubscription
+      TopicArn: !Ref SNSTopic
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda-stepfunction-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                  - states:StartExecution
+                Resource: "*"
+
+  # IAM Role for Step Function
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: stepfunction-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref SNSTopic
+
+  # Lambda Function
+  StepFunctionStarterLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: StartStepFunctionFromS3
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          def handler(event, context):
+              sfn = boto3.client('stepfunctions')
+              bucket = event['Records'][0]['s3']['bucket']['name']
+              key = event['Records'][0]['s3']['object']['key']
+              input_data = {
+                  'bucket': bucket,
+                  'key': key
+              }
+              sfn.start_execution(
+                  stateMachineArn='{{STATE_MACHINE_ARN}}',
+                  input=json.dumps(input_data)
+              )
+              return {'status': 'Step Function started'}
+
+  # S3 Bucket
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: laboratorio-stepfunction-bucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:Put
+            Function: !GetAtt StepFunctionStarterLambda.Arn
+
+  # Permission for S3 to invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref StepFunctionStarterLambda
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt S3Bucket.Arn
+
+  # Step Function Definition
+  StepFunction:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: FileValidationFlow
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Step function for file validation and notification",
+          "StartAt": "ValidateFile",
+          "States": {
+            "ValidateFile": {
+              "Type": "Pass",
+              "Result": "Validation Complete",
+              "Next": "SendNotification"
+            },
+            "SendNotification": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "Message": "File processed successfully",
+                "TopicArn": "${SNSTopic}"
+              },
+              "End": true
+            }
+          }
+        }
+
+Outputs:
+  S3BucketName:
+    Description: Bucket name for file uploads
+    Value: !Ref S3Bucket
+
+  LambdaFunctionName:
+    Description: Lambda function triggered by S3 uploads
+    Value: !Ref StepFunctionStarterLambda
+
+  StepFunctionArn:
+    Description: ARN of the Step Function
+    Value: !Ref StepFunction
+
+  SNSTopicArn:
+    Description: ARN of the SNS Topic
+    Value: !Ref SNSTopic
