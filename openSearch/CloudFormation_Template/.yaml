@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation Template for OpenSearch Domain (movies)
+
+Resources:
+  OpenSearchServiceDomain:
+    Type: "AWS::OpenSearchService::Domain"
+    Properties:
+      DomainName: movies
+      EngineVersion: "OpenSearch_2.7" # OpenSearch 2.17 maps to OpenSearch_2.7 in CloudFormation
+      ClusterConfig:
+        InstanceType: "t3.small.search"
+        InstanceCount: 3
+        ZoneAwarenessEnabled: true
+        ZoneAwarenessConfig:
+          AvailabilityZoneCount: 3
+        DedicatedMasterEnabled: false
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+        VolumeType: gp2
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      EncryptionAtRestOptions:
+        Enabled: true
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+        TLSSecurityPolicy: Policy-Min-TLS-1-2-2019-07
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: admin
+          MasterUserPassword: "AdminPassword123!" # ⚠️ Replace or use Secrets Manager
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: "es:*"
+            Resource: !Sub arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/movies/*
+
+Outputs:
+  OpenSearchDomainEndpoint:
+    Description: "OpenSearch Domain Endpoint"
+    Value: !GetAtt OpenSearchServiceDomain.DomainEndpoint
+
+  DashboardURL:
+    Description: "OpenSearch Dashboard URL"
+    Value: !Join
+      - ""
+      - - "https://"
+        - !GetAtt OpenSearchServiceDomain.DomainEndpoint
