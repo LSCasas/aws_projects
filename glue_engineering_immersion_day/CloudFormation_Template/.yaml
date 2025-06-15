@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Glue Data Validation and ETL Workshop Resources
+
+Resources:
+  GlueLabRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GlueLabRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  TicketDataDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: ticketdata
+        Description: "Database for ticket data"
+
+  TicketsInitialCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: glue-lab-crawler
+      Role: !GetAtt GlueLabRole.Arn
+      DatabaseName: !Ref TicketDataDatabase
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${DataBucket}/tickets/"
+      SchemaChangePolicy:
+        UpdateBehavior: LOG
+        DeleteBehavior: DEPRECATE_IN_DATABASE
+      RecrawlPolicy:
+        RecrawlBehavior: CRAWL_EVERYTHING
+      Schedule:
+        ScheduleExpression: "cron(0 12 * * ? *)" # Change to "OnDemand" if manually triggered
+      Configuration: '{ "Version": 1.0, "CrawlerOutput": { "Partitions": { "AddOrUpdateBehavior": "InheritFromTable" } } }'
+
+  ParquetCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: glue-lab-parquet-crawler
+      Role: !GetAtt GlueLabRole.Arn
+      DatabaseName: !Ref TicketDataDatabase
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${DataBucket}/tickets/dms_parquet/"
+      SchemaChangePolicy:
+        UpdateBehavior: LOG
+        DeleteBehavior: DEPRECATE_IN_DATABASE
+      RecrawlPolicy:
+        RecrawlBehavior: CRAWL_EVERYTHING
+      Schedule:
+        ScheduleExpression: "cron(0 12 * * ? *)" # Adjust if required
+      Configuration: '{ "Version": 1.0, "CrawlerOutput": { "Partitions": { "AddOrUpdateBehavior": "InheritFromTable" } } }'
+
+  # Example Glue Job for Sport_Team Table
+  GlueETLJobSportTeam:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: Glue-Lab-SportTeamParquet
+      Role: !GetAtt GlueLabRole.Arn
+      Command:
+        Name: glueetl
+        PythonVersion: 3
+        ScriptLocation: !Sub "s3://${ScriptBucket}/scripts/sport_team_etl.py"
+      DefaultArguments:
+        "--job-language": "python"
+        "--enable-continuous-cloudwatch-log": "true"
+        "--enable-glue-datacatalog": "true"
+        "--TempDir": !Sub "s3://${TempBucket}/temp/"
+        "--source_database": "ticketdata"
+        "--source_table": "sport_team"
+        "--target_path": !Sub "s3://${DataBucket}/tickets/dms_parquet/sport_team/"
+      GlueVersion: "4.0"
+      MaxRetries: 1
+      NumberOfWorkers: 2
+      WorkerType: G.1X
+
+Parameters:
+  DataBucket:
+    Type: String
+    Description: S3 bucket name containing ticket data and parquet folders (no trailing slash)
+
+  ScriptBucket:
+    Type: String
+    Description: S3 bucket name where Glue scripts are stored (no trailing slash)
+
+  TempBucket:
+    Type: String
+    Description: S3 bucket name for Glue temporary files (no trailing slash)
+
+Outputs:
+  GlueDatabase:
+    Description: Glue database for ticket data
+    Value: !Ref TicketDataDatabase
+
+  GlueLabRoleName:
+    Description: IAM Role used by Glue
+    Value: !Ref GlueLabRole
