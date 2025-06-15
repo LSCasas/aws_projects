@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  CloudFormation template to deploy a basic Amazon Kinesis Data Stream 
+  with provisioned capacity for lab and testing purposes.
+
+Resources:
+  KinesisDataStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: test
+      ShardCount: 1
+      RetentionPeriodHours: 24
+      StreamModeDetails:
+        StreamMode: PROVISIONED
+
+Outputs:
+  StreamName:
+    Description: Name of the Kinesis Data Stream
+    Value: !Ref KinesisDataStream
+
+  StreamARN:
+    Description: ARN of the Kinesis Data Stream
+    Value: !GetAtt KinesisDataStream.Arn
