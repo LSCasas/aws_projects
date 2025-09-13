@@ -2,7 +2,7 @@
 
 Educational repository with practical documentation on different AWS services. This repository is aimed at providing hands-on experience with tools like EC2, Lambda, Glue, Kinesis, Step Functions, and more.
 
-## Folder Contents
+## Folder Contents 
 
 Each folder contains a different hands-on project. These folders follow a consistent structure to maintain clarity and facilitate understanding.
 
